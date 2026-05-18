@@ -48,7 +48,7 @@ This project supports two ways of running the RAG system:
 
 ---
 
-### ✅ Option A — Claude (recommended for highest quality)
+### Option A — Claude (recommended for highest quality)
 
 Best for final results, benchmarking, and research experiments.
 
