@@ -26,9 +26,8 @@ This work aims to close that gap.
 ---
 
 ## Quick start
-
 ```bash
-# Clone
+# Clone the repository
 git clone https://github.com/<your-username>/pecos-modeling-ai.git
 cd pecos-modeling-ai
 
@@ -40,10 +39,26 @@ source venv/bin/activate          # macOS/Linux
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the benchmark review app
-cd benchmark_app
-streamlit run benchmark_app.py
-```
+
+## Running the applications
+
+This project supports two ways of running the RAG system:  
+(1) using Claude via API (best quality), or  
+(2) using Ollama locally (free, no API key required).
+
+---
+
+### ✅ Option A — Claude (recommended for highest quality)
+
+Best for final results, benchmarking, and research experiments.
+
+1. Get an API key from: https://console.anthropic.com  
+
+2. Set your API key:
+
+```bash
+export ANTHROPIC_API_KEY=your_key_here     # macOS/Linux
+# setx ANTHROPIC_API_KEY your_key_here     # Windows
 
 For the RAG runner you'll also need an Anthropic API key (see `benchmark_app/README.md`).
 
