@@ -83,7 +83,7 @@ https://github.com/<your-username>/pecos-modeling-ai
 
 ## Funding & affiliation
 
-This work is part of a PhD at [Department], [University].
+This work is part of a PhD at the Department of Civil, Environmental & Construction Engineering, Texas Tech University.
 Supported in part by Texas Water Development Board / Texas Produced Water Consortium.
 
 ---
