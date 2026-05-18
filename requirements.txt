@@ -1,0 +1,21 @@
+# Core UI
+streamlit>=1.32.0
+
+# RAG components
+chromadb>=0.4.22
+sentence-transformers>=2.5.0
+pypdf>=4.0.0
+
+# LLM API
+anthropic>=0.39.0
+
+# Numeric / data
+numpy>=1.24.0
+
+# Optional but useful for future work
+# Uncomment as needed:
+# pandas>=2.0.0          # for richer data analysis
+# matplotlib>=3.7.0      # for plots beyond Streamlit's defaults
+# plotly>=5.18.0         # for interactive plots in Streamlit
+# scikit-learn>=1.3.0    # for any classical ML on the corpus
+# llama-index>=0.10.0    # alternative RAG framework (if you want to switch later)
