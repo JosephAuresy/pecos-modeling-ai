@@ -2,7 +2,7 @@
 
 > **35-question benchmark for evaluating AI assistants on coupled surface-groundwater modeling, contaminant transport, salinity, and produced-water reuse questions relevant to the Pecos watershed PhD work.**
 >
-> Version 0.2-draft - Status: draft - pending professor review  
+> Version 0.2-draft - Status: draft - pending review  
 > Author: David Serrano Suarez
 
 Questions are organized by **technical topic**. 
