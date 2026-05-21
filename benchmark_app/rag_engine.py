@@ -21,6 +21,7 @@ import hashlib
 import json
 import os
 import re
+import ollama
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Optional
@@ -428,20 +429,41 @@ def call_claude(
         block.text for block in response.content if hasattr(block, "text")
     )
 
+def call_ollama(
+    prompt: str,
+    model: str = "llama3",
+) -> str:
+    """Call Ollama locally and return response."""
+    response = ollama.chat(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response["message"]["content"]
+
 
 def rag_answer(
     question: str,
     store: VectorStore,
-    api_key: str,
+    api_key: str | None = None,
     k: int = 5,
     model: str = "claude-sonnet-4-20250514",
+    provider: str = "anthropic",  # <-- NUEVO
     prompt_template: str = DEFAULT_RAG_PROMPT,
 ) -> RagResponse:
-    """End-to-end: retrieve, format, call Claude, return."""
+    """End-to-end: retrieve, format, call LLM, return."""
+
     retrieved = store.query(question, k=k)
     context = format_context(retrieved)
     prompt = prompt_template.format(context=context, question=question)
-    answer = call_claude(api_key, prompt, model=model)
+
+    # 🔥 SWITCH ENTRE MODELOS
+    if provider == "anthropic":
+        answer = call_claude(api_key, prompt, model=model)
+    elif provider == "ollama":
+        answer = call_ollama(prompt, model=model)
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
+
     return RagResponse(
         answer=answer,
         retrieved=retrieved,
@@ -452,10 +474,11 @@ def rag_answer(
 
 def baseline_answer(
     question: str,
-    api_key: str,
+    api_key: str | None = None,
     model: str = "claude-sonnet-4-20250514",
+    provider: str = "anthropic",
 ) -> str:
-    """No retrieval — pure model knowledge baseline."""
+
     prompt = (
         "You are a domain expert in hydrologic modeling, specifically the SWAT/SWAT+ "
         "family, MODFLOW, MT3D-USGS, and related coupled surface-groundwater tools. "
@@ -463,4 +486,12 @@ def baseline_answer(
         "Answer in the same language as the question.\n\n"
         f"QUESTION:\n{question}\n\nANSWER:"
     )
-    return call_claude(api_key, prompt, model=model)
+
+    if provider == "anthropic":
+        return call_claude(api_key, prompt, model=model)
+    elif provider == "ollama":
+        return call_ollama(prompt, model=model)
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
+
+

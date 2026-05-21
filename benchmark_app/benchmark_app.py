@@ -181,7 +181,7 @@ def filter_questions(qs, cat_filter, diff_filter, pecos_filter, search):
 
 with st.sidebar:
     st.markdown("## Pecos Benchmark")
-    st.caption(f"v{data['metadata']['version']} · {data['metadata']['review_status']}")
+    st.caption(f"v{data['metadata']['version']} · {len(questions)} questions · {len(categories)} topics")
 
     st.markdown("---")
     st.markdown("### Filters")
@@ -286,19 +286,21 @@ with col1:
     )
 with col2:
     st.markdown(
+        f"<div class='stat-card'><b>{len(categories)}</b> topics · "
+        f"<b>{total_pecos}</b> Pecos-specific</div>",
+        unsafe_allow_html=True,
+    )
+with col3:
+    st.markdown(
         f"<div class='stat-card'><span class='difficulty-easy'>{total_easy}</span> easy · "
         f"<span class='difficulty-medium'>{total_medium}</span> medium · "
         f"<span class='difficulty-hard'>{total_hard}</span> hard</div>",
         unsafe_allow_html=True,
     )
-with col3:
-    st.markdown(
-        f"<div class='stat-card'><b>{total_pecos}</b> Pecos-specific</div>",
-        unsafe_allow_html=True,
-    )
 with col4:
     st.markdown(
-        f"<div class='stat-card'><b>{len(categories)}</b> categories</div>",
+        f"<div class='stat-card'><b>v{data['metadata']['version']}</b> — "
+        f"{data['metadata']['review_status']}</div>",
         unsafe_allow_html=True,
     )
 
@@ -462,7 +464,7 @@ if new_advisor != advisor_notes:
 # -----------------------------------------------------------------------------
 
 st.markdown("---")
-with st.expander("📊 Category breakdown"):
+with st.expander("📊 Topic breakdown"):
     rows = []
     for cat_key, cat_info in categories.items():
         n = sum(1 for x in questions if x["category"] == cat_key)
@@ -470,7 +472,7 @@ with st.expander("📊 Category breakdown"):
         n_hard = sum(1 for x in questions if x["category"] == cat_key and x["difficulty"] == "hard")
         rows.append(
             {
-                "Category": cat_info["label"],
+                "Topic": cat_info["label"],
                 "Questions": n,
                 "Pecos-specific": n_pecos,
                 "Hard": n_hard,
@@ -486,7 +488,7 @@ with st.expander("ℹ️ About this benchmark"):
         contaminant transport, and produced water reuse — with a focus on the Pecos watershed.
 
         **How to use in a review meeting.**
-        1. Filter to the questions you want to discuss (e.g. Pecos-specific + hard).
+        1. Filter by topic (sidebar) to focus the discussion — e.g. 'PFLOTRAN Challenges' or 'PhD Motivation'.
         2. Hide the reference answer (sidebar toggle) and let your advisor answer first.
         3. Reveal the reference. Discuss disagreements.
         4. Switch to Edit mode to update the reference or key points.

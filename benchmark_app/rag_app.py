@@ -185,6 +185,13 @@ if "batch_results" not in st.session_state:
 
 with st.sidebar:
     st.markdown("## ⚙️ Configuration")
+    
+    provider = st.selectbox(
+        "Model provider",
+        options=["anthropic", "ollama"],
+        index=0,
+        help="Anthropic = Claude (paid, best quality). Ollama = local models (free).",
+    )
 
     # API key
     api_key = st.text_input(
@@ -196,12 +203,19 @@ with st.sidebar:
     )
     st.session_state.api_key = api_key
 
-    model_choice = st.selectbox(
-        "Claude model",
-        options=["claude-sonnet-4-20250514", "claude-haiku-4-5-20251001"],
-        index=0,
-        help="Sonnet 4 is better; Haiku 4.5 is much cheaper and faster.",
-    )
+
+    if provider == "anthropic":
+        model_choice = st.selectbox(
+            "Claude model",
+            options=["claude-sonnet-4-20250514", "claude-haiku-4-5-20251001"],
+            index=0,
+        )
+    else:
+        model_choice = st.selectbox(
+            "Ollama model",
+            options=["llama3", "mistral"],
+            index=0,
+        )
 
     k_retrieve = st.slider(
         "Chunks to retrieve (k)",
@@ -339,12 +353,14 @@ with col4:
         unsafe_allow_html=True,
     )
 
-# Gate the rest on having an API key
-if not api_key:
+# Anthropic or Ollama
+
+if provider == "anthropic" and not api_key:
     st.warning(
-        "⚠️ Enter your Anthropic API key in the sidebar to run questions. "
-        "You can still upload documents and inspect the corpus without one."
+        "⚠️ Enter your Anthropic API key to run with Claude. "
+        "Or switch provider to Ollama (free, local)."
     )
+
 
 # Tabs for the three main modes
 tab_single, tab_batch, tab_runs = st.tabs(
@@ -360,7 +376,7 @@ with tab_single:
     st.markdown("### Pick a question to test")
 
     q_options = [
-        f"{q['id']} — [{q['difficulty'].upper()}] {q['subtopic']}"
+        f"{q['id']} — [{categories[q['category']]['label']}] {q['subtopic']}"
         for q in questions
     ]
     selected = st.selectbox(
@@ -390,13 +406,13 @@ with tab_single:
         run_rag = st.button(
             "▶️ Run RAG",
             type="primary",
-            disabled=not api_key or stats["total_chunks"] == 0,
+            disabled=(provider == "anthropic" and not api_key) or stats["total_chunks"] == 0,
             use_container_width=True,
         )
     with run_cols[1]:
         run_baseline = st.button(
             "🔵 Also run baseline",
-            disabled=not api_key,
+            disabled=(provider == "anthropic" and not api_key),
             use_container_width=True,
             help="No retrieval — Claude answers from its training knowledge only.",
         )
@@ -414,12 +430,14 @@ with tab_single:
         else:
             with st.spinner("Retrieving and generating..."):
                 try:
+                    
                     result = rag.rag_answer(
                         question=q["question"],
                         store=store,
                         api_key=api_key,
                         k=k_retrieve,
                         model=model_choice,
+                        provider=provider,
                     )
                     st.session_state.last_result = result
                     st.session_state.last_eval = None
@@ -592,26 +610,26 @@ with tab_single:
 with tab_batch:
     st.markdown("### Run multiple questions in one go")
     st.caption(
-        "This is what produces your benchmark numbers. Pick a subset (or all 30), "
+        f"This is what produces your benchmark numbers. Pick a subset (or all {len(questions)}), "
         "run them, and save the results for later comparison."
     )
 
     # Subset selection
     subset_choice = st.radio(
         "Which questions?",
-        options=["All 30", "Easy only", "Medium only", "Hard only",
-                 "Pecos-specific only", "Custom selection"],
+        options=["All", "By topic", "Pecos-specific only", "Custom selection"],
         horizontal=True,
     )
 
-    if subset_choice == "All 30":
+    if subset_choice == "All":
         subset_ids = [q["id"] for q in questions]
-    elif subset_choice == "Easy only":
-        subset_ids = [q["id"] for q in questions if q["difficulty"] == "easy"]
-    elif subset_choice == "Medium only":
-        subset_ids = [q["id"] for q in questions if q["difficulty"] == "medium"]
-    elif subset_choice == "Hard only":
-        subset_ids = [q["id"] for q in questions if q["difficulty"] == "hard"]
+    elif subset_choice == "By topic":
+        selected_cat = st.selectbox(
+            "Topic",
+            options=list(categories.keys()),
+            format_func=lambda c: categories[c]["label"],
+        )
+        subset_ids = [q["id"] for q in questions if q["category"] == selected_cat]
     elif subset_choice == "Pecos-specific only":
         subset_ids = [q["id"] for q in questions if q["pecos_specific"]]
     else:  # Custom
@@ -681,6 +699,7 @@ with tab_batch:
                     rag_resp = rag.rag_answer(
                         question=q["question"], store=store,
                         api_key=api_key, k=k_retrieve, model=model_choice,
+                        provider=provider,
                     )
                     row["rag_answer"] = rag_resp.answer
                     row["rag_chunks"] = [
@@ -705,6 +724,7 @@ with tab_batch:
                     baseline = rag.baseline_answer(
                         question=q["question"],
                         api_key=api_key, model=model_choice,
+                        provider=provider,
                     )
                     row["baseline_answer"] = baseline
                     if batch_score:
@@ -929,8 +949,8 @@ This is the experiment that, when you later add the forum corpus, will demonstra
 the actual contribution of community knowledge.
 
 **Cost & speed:**
-Each Sonnet 4 call ≈ $0.01 and 3-5 seconds. Running all 30 questions in
-"Both + score" mode = 120 API calls = ~$1-2 and ~7 minutes.
+Each Sonnet 4 call ≈ $0.01 and 3-5 seconds. Running all questions in
+"Both + score" mode ≈ 4× questions API calls = ~$1-2 and ~7 minutes.
 Switch to `claude-haiku-4-5` for ~10x cheaper and faster, slightly less reliable judge.
         """
     )
